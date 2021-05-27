@@ -1,0 +1,2 @@
+#Filter	  Zero_Pt_Mag   Image_name	                DS9_color_code	   Sky_file	ellip_PA_file		PSF_file	Pix_scale	Arcsec_scale	M_L_ratio	Mag_vega
+v	  25.724	mock_sample.fits	g	           sky_v.dat	ellip_v.dat	V_psf.fits	0.88	0.05	0.13	4.78

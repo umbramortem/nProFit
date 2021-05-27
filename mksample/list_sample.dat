@@ -1,0 +1,17 @@
+0.88    #pixel scale (pc/pix)
+2.7	#bg value
+0.6	#bg rms
+800	#x axis size
+500	#y axis size
+psf_path/V_psf.fits	#PSF_file
+#------------------Model parameters-------------------
+#ID      x0	y0	modeltype	mu_0	par1(beta or W0)	par2(r0 or rd)	ELLIP	PA	
+S1      400	100	moffat	       	130 	2.3	                2.3             0.2	20
+S2      330	190	king	        70 	6.0	                1.5             0.05	40
+S3      150	300	wilson	        25	5.0	                3.0		0.5	-10
+S4      700	100	moffat	        90	3.0	                1.5		0.7	45
+S5      550	420	king	        80 	8.0	                0.7             0.05	40
+S6      80	100	wilson	        65	7.0	                2.0		0.2	-80
+S7      500	300	moffat	        43	2.7	                4.0		0.7	45
+S8      520	315	king	        87 	4.0	                1.4             0.05	40
+S9      100	400	wilson	        65	5.0	                3.1		0.2	-80

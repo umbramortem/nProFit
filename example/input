@@ -1,0 +1,28 @@
+filters.dat						#Filters information file
+1							#Fitting box size option (1 same for all objects, 2 table with box size for each object)
+100		     					#Box size (if the previous option is 1), Fitting box sizes information file (if the previous option is 2)
+coords.dat						#Objects coordinates
+1							#Coordinate system (1 Image(pixel), 2 WCS)
+yes							#Cut images into images centered in each object
+yes							#Substract sky
+yes							#Measure sky 
+2							#Sky measurement option (1 for instat, 2 for median method, see README for details)
+no							#Provide measurements of the sky in a file 
+no							#Use pixel mask of contaminants?
+none							#Pixel mask file (ASCII file)
+no							#Use given ellipticity and P.A. for isophotal fitting (supplied by the user)
+yes							#Calculate P.A., ellipticity for isophotal fitting
+yes							#Calculate isophotal fitting
+no							#Restrict ellipticity 
+0.3							#Ellipticity restriction value (if previous option is 'yes')
+yes							#Convolve model with the PSF
+1							#PSF options (1 user given, 2 Gaussian, etc.)
+1							#Dynamical models fitting options (1 prepare data for fitting, 2 data already prepared for fitting)
+yes							#Fit Moffat-EFF profile
+yes							#Fit King Dynamical profile
+yes							#Fit Wilson profile
+nprofit_library                                         #Absolute nProFit library path
+1							#Fitting procedure options (1 automatically fit, 2 prepare a script to fit later the models, 3 fits already performed)
+yes							#Plot surface brightness profiles and dynamical models fitting
+/Applications/SAOImageDS9.app/Contents/MacOS/ds9	#DS9 path (if the previous option is yes)
+yes							#Compute derived parameters
