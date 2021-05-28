@@ -8,8 +8,6 @@ import sky as skyclass
 import ellipse as ellipclass
 import results as resu
 import der_pars2 as der
-#import plots as plotclass
-#import profiles as profitclass
 
 #--------------------------------Checking input file-----------------------------
 
@@ -22,7 +20,6 @@ iso_path=sys.argv[0].split('nprofit.py')[0]
 
 print('#----------------------Reading input files---------------------------')
 
-#scale=0.88 #me falta agregar este en el input
 input_file=scipy.genfromtxt(sys.argv[1],comments='#',dtype='S')
 filters=scipy.genfromtxt(input_file[0],comments='#',usecols=0,dtype='S')
 mag_zero={}
