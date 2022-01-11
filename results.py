@@ -13,43 +13,43 @@ class mosaics:
 
 	def __init__(self,filters,ds9,ds9_path,plots_dir,data_dir,names,scale):
 	
-		ds9_dic={'r':'-red','g':'-green','b':'-blue'}
+		ds9_dic={'R':'-red','G':'-green','B':'-blue'}
 		cmd_ds9=' -view colorbar no -scale log -scale mode zmax'
 		files_path={}
 		top_vec={}
 		id_files={}
 		for k in np.arange(0,len(filters),1):
-			files_path[ds9[k]]=np.genfromtxt(os.path.join(data_dir,'list_intens_profiles_'+filters[k]+'.dat'),usecols=1,dtype='S')
-			id_files[ds9[k]]=np.genfromtxt(os.path.join(data_dir,'list_intens_profiles_'+filters[k]+'.dat'),usecols=0,dtype='S')
+			files_path[ds9[filters[k]]]=np.genfromtxt(os.path.join(data_dir,'list_intens_profiles_'+filters[k]+'.dat'),usecols=1,dtype='S')
+			id_files[ds9[filters[k]]]=np.genfromtxt(os.path.join(data_dir,'list_intens_profiles_'+filters[k]+'.dat'),usecols=0,dtype='S')
 	
-			if files_path[ds9[k]].size==1:
-				top_vec[ds9[k]]=np.array([files_path[ds9[k]]])
-				id_files[ds9[k]]=np.array([id_files[ds9[k]]])
+			if files_path[ds9[filters[k]]].size==1:
+				top_vec[ds9[filters[k]]]=np.array([files_path[ds9[filters[k]]]])
+				id_files[ds9[filters[k]]]=np.array([id_files[ds9[filters[k]]]])
 			else:	
-				top_vec[ds9[k]]=files_path[ds9[k]]
+				top_vec[ds9[filters[k]]]=files_path[ds9[filters[k]]]
 	
-		for i in np.arange(0,len(top_vec[ds9[k]]),1):
+		for i in np.arange(0,len(top_vec[ds9[filters[k]]]),1):
 			cmd=''
 			if filters.size==1:
 				cmd_ds9_2=' '
-				cmd=cmd+' '+os.path.join(data_dir,top_vec[ds9[0]][i].split('.dat')[0]+'.fits')+' '
+				cmd=cmd+' '+os.path.join(data_dir,top_vec[ds9[filters[0]]][i].split('.dat')[0]+'.fits')+' '
 			else:
 				cmd_ds9_2=' -rgb '
 				if filters.size==2:
 					for k in ds9_dic.keys():
-						if k not in ds9:
+						if k not in ds9.keys():
 							cmd=cmd+ds9_dic[k]
 							cmd=cmd+' '+os.path.join(data_dir,top_vec[ds9[0]][i].split('.dat')[0]+'.fits')+' '
-					for k in ds9:
+					for k in ds9.keys():
 						cmd=cmd+ds9_dic[k]
 						cmd=cmd+' '+os.path.join(data_dir,top_vec[ds9[k]][i].split('.dat')[0]+'.fits')+' '
 			
 				if filters.size==3:
-					for k in ds9:
-						cmd=cmd+ds9_dic[k]
+					for k in ds9.keys():
+						cmd=cmd+ds9_dic[ds9[k]]
 						cmd=cmd+' '+os.path.join(data_dir,top_vec[ds9[k]][i].split('.dat')[0]+'.fits')+' '
-			top_vec[ds9[k]][i].split
-			plots_path=os.path.join(plots_dir,'mosaic_'+id_files[ds9[0]][i]+'.png')
+			#top_vec[ds9[k]][i].split
+			plots_path=os.path.join(plots_dir,'mosaic_'+id_files[ds9[filters[0]]][i]+'.png')
 			
 			cmd_end='-zoom to fit -height 450 -width 450 -saveimage png '+plots_path+' -exit'
 			os.system(ds9_path+cmd_ds9+cmd_ds9_2+cmd+cmd_end)
@@ -75,6 +75,7 @@ class plots:
 		for i in np.arange(0,len(filters),1):
 			filter_dic[filters[i]]=filter_colors[i]
 
+		#print models_list
 		for m in np.arange(0,len(models_list),1):
 			ln_dic[models_list[m]]=nums_mod[m]
 			list_pars[models_list[m]]={}
@@ -96,7 +97,8 @@ class plots:
 		else:
 			ids=list_pars[models_list[0]][filters[0]][:,0]
                 m=0
-	
+
+		#print list_pars	
 		for i in np.arange(0,len(ids),1):
 			min_int=1e6
 			max_int=0.
@@ -105,6 +107,8 @@ class plots:
 			sky_rms[ids[i]]={}
 			
 			for k in filters:
+				#print sky_dic[k]
+				#print ids,'ids',len(ids)
 				if len(ids)<=1:
 					sky_rms[ids[i]][k]=np.float(sky_dic[k][2])
 				else:
@@ -191,6 +195,7 @@ class plots:
 							bx.set_xticks([])
 						ax2.set_xscale('log')
 						if (m==0):
+							ax2.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 							ax2.set_xlabel('SMA [pc]',size=10)
 						if (m>0):
                                         		ax2.set_xticks([])
@@ -210,17 +215,20 @@ class plots:
 					list_table.append(list_table_par3)
 					row_labels=[row_labels_dic[mod][0],row_labels_dic[mod][1],r'$\chi^2$']
 					the_table = ax.table(cellText=list_table,
-                                                          colWidths = [0.1]*2,
+                                                          colWidths = [0.2]*4,
                                                           rowLabels=row_labels,
-                                                          colLabels=col_labels,
-						          bbox=[0.15,0.05, .2,.3])
+                                                          colLabels=col_labels,loc='left',rowLoc='right',colLoc='right',
+                                                          #bbox=Bbox([[1, 1], [3, 7]])
+						          #bbox=[0.15,0.05, .2,.3])
+						          bbox=[.1,0.02, .5,.3])
 					the_table.auto_set_font_size(False)
-                                        the_table.set_fontsize(8)
-                                        the_table.scale(1.4, 1.4)
+                                        the_table.set_fontsize(4.5)
+                                        #the_table.scale(1.4, 1.4)
 					ax.set_xscale('log')
                                         ax.set_xticks([])
-					ax2.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+					#ax2.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 					bx.set_xscale('log')
+                                        #ax.set_xticks([])
 					bx.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 					ax.set_ylim(maxmag-1,minmag+1)
 					ax.invert_yaxis()		
@@ -237,8 +245,8 @@ class plots:
                                         ax.set_yticks([])
 					bx.set_xticks([])
                                         ax.set_xticks([])
-					bx.text(0.2, 0.85,'Object '+str(ids[i]),horizontalalignment='center',verticalalignment='center',transform = bx.transAxes,size=8)
-					bx.legend(handles_leg,labels_leg,loc='lower left',handletextpad=0.0)
+					bx.text(0.3, 0.85,'Object '+str(ids[i]),horizontalalignment='center',verticalalignment='center',transform = bx.transAxes,size=8)
+					bx.legend(handles_leg,labels_leg,loc='lower left',handletextpad=0.0,fontsize=7)
 
 				if ((m==9 and mod==ln_dic.keys()[-1]) or (i==len(ids)-1 and mod==ln_dic.keys()[-1])):
 					pdf_pages.savefig(fig)

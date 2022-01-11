@@ -92,8 +92,8 @@ class ellipse:
 		
 		if (self.opt_ellip==1):
                 	self.id_coor=coord_file[:,0]
-                	self.x0=coord_file[:,1].astype(int)
-                	self.y0=coord_file[:,2].astype(int)
+                	self.x0=np.round(coord_file[:,1].astype(float)).astype(int)
+                	self.y0=np.round(coord_file[:,2].astype(float)).astype(int)
 			self.ellip_f=ellip_f
 
 		if (self.opt_ellip==3) or (self.opt_ellip==4):
