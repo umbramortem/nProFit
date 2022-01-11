@@ -36,8 +36,8 @@ class cut_image:
 	
 		self.filters=filters
 		self.id_coor=coords[:,0]
-		self.x_coor=coords[:,1].astype(int)
-		self.y_coor=coords[:,2].astype(int)
+		self.x_coor=np.round(coords[:,1].astype(float)).astype(int)
+		self.y_coor=np.round(coords[:,2].astype(float)).astype(int)
 		self.box_opt=box_opt
 		if self.box_opt==1:
 			self.box_tmp=int(round(int(box_size)/2.))
