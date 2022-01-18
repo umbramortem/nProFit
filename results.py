@@ -52,7 +52,20 @@ class mosaics:
 			plots_path=os.path.join(plots_dir,'mosaic_'+id_files[ds9[filters[0]]][i]+'.png')
 			
 			cmd_end='-zoom to fit -height 450 -width 450 -saveimage png '+plots_path+' -exit'
-			os.system(ds9_path+cmd_ds9+cmd_ds9_2+cmd+cmd_end)
+                        if os.path.exists(plots_path)==False:
+			        os.system(ds9_path+cmd_ds9+cmd_ds9_2+cmd+cmd_end)
+                                img=Image.open(plots_path)
+                                arr=np.array(img)
+                                for j in np.arange(0,3,1):
+                                        tmp=arr[:,:,j]
+                                        arr_tmp=tmp[tmp!=255]
+                                        n_size=int(np.sqrt(np.shape(arr_tmp)[0]))
+                                        arr2=arr_tmp.reshape(n_size,n_size)
+                                        if j==0:
+                                                arr_3D=np.zeros((n_size,n_size,3))
+                                        arr_3D[:,:,j]=arr2
+                                new_im=Image.fromarray(arr_3D.astype(np.uint8))
+                                new_im.save(plots_path)
 
 class plots:
 	
@@ -124,8 +137,11 @@ class plots:
 					max_int=np.max(data_obs[ids[i]][k][mask,1])
 					max_filter=k
 
-			minmag=-2.5*np.log10(min_int*400)+np.float(mag_zero[min_filter][0])
-			maxmag=-2.5*np.log10(max_int*400)+np.float(mag_zero[max_filter][0])
+                        fact_min=1./(arc_pix[min_filter][0]**2)
+                        fact_max=1./(arc_pix[max_filter][0]**2)
+			minmag=-2.5*np.log10(min_int*fact_min)+np.float(mag_zero[min_filter][0])
+			maxmag=-2.5*np.log10(max_int*fact_max)+np.float(mag_zero[max_filter][0])
+                        print minmag,maxmag
 			
 			if m>9.:
 				m=0
@@ -166,20 +182,26 @@ class plots:
 						fact=1./(arc_pix[k]**2)
 						mag_obs=-2.5*np.log10(intens_obs*fact)+np.float(mag_zero[k][0])
 						mag_mod=-2.5*np.log10(data_mod[ids[i]][k][mod][:len_obs]*fact)+np.float(mag_zero[k][0])
-						res=mag_obs-mag_mod
+                                                res=mag_obs[:len(mag_mod)]-mag_mod
 						ax.plot(sma_pix[~mask_rfit],mag_obs[~mask_rfit],color=filter_dic[k],ls='dashed')
 						ax.errorbar(sma_pix[mask_rfit],mag_obs[mask_rfit],err[mask_rfit],marker='o',color=filter_dic[k],ls='none',mfc='white',ms=4,label=k)
 						handles_leg, labels_leg = ax.get_legend_handles_labels()	
-						ax.plot(sma_pix,mag_mod,color=filter_dic[k])
+                                                ax.plot(sma_pix[:len(mag_mod)],mag_mod,color=filter_dic[k])
 						ax.axvline(rfit_tmp,color=filter_dic[k],ls='dashed')
 						ax.text(1.2,maxmag-0.2,models_lab[mod],fontsize=8)
 						ax.yaxis.set_minor_locator(ticker.MultipleLocator(.5))
 						ax.yaxis.set_major_locator(ticker.MultipleLocator(2))
 						ax2=ax.twiny()
 						ax2.tick_params(which='both',direction='in',labelsize=10)
-						ax2.plot(sma_obs,mag_obs,color='none')
-						bx.errorbar(sma_pix[mask_rfit],res[mask_rfit]/4,err[mask_rfit],marker='o',color=filter_dic[k],ls='-',mfc='white',ms=4)
-						bx.plot(sma_pix[~mask_rfit],res[~mask_rfit],marker='o',color='white',ms=1)
+						ax2.plot(sma_obs[:len(mag_mod)],mag_obs[:len(mag_mod)],color='none')
+                                                #err_sub=err[:len(mag_mod)]
+						#bx.errorbar(sma_pix[:len(mag_mod)][mask_rfit],res[mask_rfit]/4,err[:len(mag_mod)][mask_rfit],marker='o',color=filter_dic[k],ls='-',mfc='white',ms=4)
+                                                mask_rfit2=sma_pix[:len(mag_mod)]<=rfit_tmp
+                                                bx.plot(sma_pix[:len(mag_mod)],mag_obs[:len(mag_mod)],color='none')
+                                                
+						bx.errorbar(sma_pix[:len(mag_mod)][mask_rfit2],res[mask_rfit2]/4,err[:len(mag_mod)][mask_rfit2],marker='o',color=filter_dic[k],ls='-',mfc='white',ms=4)
+						#bx.errorbar(sma_pix[:len(mag_mod)][~mask_rfit2],res[~mask_rfit2]/4,err[:len(mag_mod)][~mask_rfit2],color='none')
+						bx.plot(sma_pix[:len(mag_mod)][~mask_rfit2],res[~mask_rfit2],marker='o',color='white',ms=1)
 						bx.set_ylim(-0.25,0.25)
 						bx.yaxis.set_minor_locator(ticker.MultipleLocator(.05))
 						bx.yaxis.set_major_locator(ticker.MultipleLocator(.1))
@@ -220,7 +242,8 @@ class plots:
                                                           colLabels=col_labels,loc='left',rowLoc='right',colLoc='right',
                                                           #bbox=Bbox([[1, 1], [3, 7]])
 						          #bbox=[0.15,0.05, .2,.3])
-						          bbox=[.1,0.02, .5,.3])
+						          #bbox=[.1,0.02, .5,.3])
+						          bbox=[.1,0.02, .3,.3])
 					the_table.auto_set_font_size(False)
                                         the_table.set_fontsize(4.5)
                                         #the_table.scale(1.4, 1.4)
@@ -230,8 +253,8 @@ class plots:
 					bx.set_xscale('log')
                                         #ax.set_xticks([])
 					bx.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-					ax.set_ylim(maxmag-1,minmag+1)
-					ax.invert_yaxis()		
+					ax.set_ylim(minmag+1,maxmag-1)
+					#ax.invert_yaxis()		
 					
 					
 
