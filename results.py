@@ -4,10 +4,13 @@ import pylab as plt
 import os
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.gridspec import GridSpec
-from PIL import Image
+from PIL import Image,ImageChops
 import matplotlib.ticker as ticker
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import MultipleLocator
+import warnings
+import matplotlib.cbook
+warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 
 class mosaics:
 
@@ -48,28 +51,22 @@ class mosaics:
 					for k in ds9.keys():
 						cmd=cmd+ds9_dic[ds9[k]]
 						cmd=cmd+' '+os.path.join(data_dir,top_vec[ds9[k]][i].split('.dat')[0]+'.fits')+' '
-			#top_vec[ds9[k]][i].split
 			plots_path=os.path.join(plots_dir,'mosaic_'+id_files[ds9[filters[0]]][i]+'.png')
 			
 			cmd_end='-zoom to fit -height 450 -width 450 -saveimage png '+plots_path+' -exit'
                         if os.path.exists(plots_path)==False:
 			        os.system(ds9_path+cmd_ds9+cmd_ds9_2+cmd+cmd_end)
                                 img=Image.open(plots_path)
-                                arr=np.array(img)
-                                for j in np.arange(0,3,1):
-                                        tmp=arr[:,:,j]
-                                        arr_tmp=tmp[tmp!=255]
-                                        n_size=int(np.sqrt(np.shape(arr_tmp)[0]))
-                                        arr2=arr_tmp.reshape(n_size,n_size)
-                                        if j==0:
-                                                arr_3D=np.zeros((n_size,n_size,3))
-                                        arr_3D[:,:,j]=arr2
-                                new_im=Image.fromarray(arr_3D.astype(np.uint8))
-                                new_im.save(plots_path)
+                                blank=Image.new(img.mode,img.size,img.getpixel((0,0)))
+                                diff=ImageChops.difference(img,blank)
+                                diff=ImageChops.add(diff,diff,2.0,-100)
+                                bbox=diff.getbbox()
+                                if bbox:
+                                        img.crop(bbox).save(plots_path)
 
 class plots:
 	
-	def __init__(self,filters,plots_dir,models_list,data_dir,mag_zero,sky_dic,scale,arc_pix):
+	def __init__(self,filters,plots_dir,models_list,data_dir,mag_zero,sky_dic,scale,arc_pix,fit_box):
 		
 		pdf_pages=PdfPages(os.path.join(plots_dir,'profile_plots.pdf'))
 		nums_mod=[0,4,6]
@@ -88,7 +85,6 @@ class plots:
 		for i in np.arange(0,len(filters),1):
 			filter_dic[filters[i]]=filter_colors[i]
 
-		#print models_list
 		for m in np.arange(0,len(models_list),1):
 			ln_dic[models_list[m]]=nums_mod[m]
 			list_pars[models_list[m]]={}
@@ -111,7 +107,6 @@ class plots:
 			ids=list_pars[models_list[0]][filters[0]][:,0]
                 m=0
 
-		#print list_pars	
 		for i in np.arange(0,len(ids),1):
 			min_int=1e6
 			max_int=0.
@@ -120,8 +115,6 @@ class plots:
 			sky_rms[ids[i]]={}
 			
 			for k in filters:
-				#print sky_dic[k]
-				#print ids,'ids',len(ids)
 				if len(ids)<=1:
 					sky_rms[ids[i]][k]=np.float(sky_dic[k][2])
 				else:
@@ -141,7 +134,6 @@ class plots:
                         fact_max=1./(arc_pix[max_filter][0]**2)
 			minmag=-2.5*np.log10(min_int*fact_min)+np.float(mag_zero[min_filter][0])
 			maxmag=-2.5*np.log10(max_int*fact_max)+np.float(mag_zero[max_filter][0])
-                        print minmag,maxmag
 			
 			if m>9.:
 				m=0
@@ -194,33 +186,30 @@ class plots:
 						ax2=ax.twiny()
 						ax2.tick_params(which='both',direction='in',labelsize=10)
 						ax2.plot(sma_obs[:len(mag_mod)],mag_obs[:len(mag_mod)],color='none')
-                                                #err_sub=err[:len(mag_mod)]
-						#bx.errorbar(sma_pix[:len(mag_mod)][mask_rfit],res[mask_rfit]/4,err[:len(mag_mod)][mask_rfit],marker='o',color=filter_dic[k],ls='-',mfc='white',ms=4)
                                                 mask_rfit2=sma_pix[:len(mag_mod)]<=rfit_tmp
-                                                bx.plot(sma_pix[:len(mag_mod)],mag_obs[:len(mag_mod)],color='none')
+                                                bx.plot(sma_pix,mag_obs,color='none')
                                                 
 						bx.errorbar(sma_pix[:len(mag_mod)][mask_rfit2],res[mask_rfit2]/4,err[:len(mag_mod)][mask_rfit2],marker='o',color=filter_dic[k],ls='-',mfc='white',ms=4)
-						#bx.errorbar(sma_pix[:len(mag_mod)][~mask_rfit2],res[~mask_rfit2]/4,err[:len(mag_mod)][~mask_rfit2],color='none')
 						bx.plot(sma_pix[:len(mag_mod)][~mask_rfit2],res[~mask_rfit2],marker='o',color='white',ms=1)
 						bx.set_ylim(-0.25,0.25)
 						bx.yaxis.set_minor_locator(ticker.MultipleLocator(.05))
 						bx.yaxis.set_major_locator(ticker.MultipleLocator(.1))
 						if ln_dic[mod]!=0:
-							bx.set_yticks([])
-                        				ax.set_yticks([])
+                                                        ax.yaxis.set_ticklabels([])
+                                                        bx.yaxis.set_ticklabels([])
 							
 						if ln_dic[mod]==0:
 							ax.set_ylabel(r'$\mu$ (mag/arcsec$^2$)',size=12)
                                 			bx.set_ylabel(r'$\Delta\mu$',size=12)
 
 						if (m<9):
-							bx.set_xticks([])
+                                                        bx.xaxis.set_ticklabels([])
 						ax2.set_xscale('log')
 						if (m==0):
 							ax2.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 							ax2.set_xlabel('SMA [pc]',size=10)
 						if (m>0):
-                                        		ax2.set_xticks([])
+                                                        ax2.xaxis.set_ticklabels([])
 						if ((m==9) | (i==len(ids)-1)):
 							bx.set_xlabel('SMA [pix]',size=10)
 						if len(ids)<=1:
@@ -237,31 +226,28 @@ class plots:
 					list_table.append(list_table_par3)
 					row_labels=[row_labels_dic[mod][0],row_labels_dic[mod][1],r'$\chi^2$']
 					the_table = ax.table(cellText=list_table,
-                                                          colWidths = [0.2]*4,
+                                                          colWidths = [0.1]*4,
                                                           rowLabels=row_labels,
                                                           colLabels=col_labels,loc='left',rowLoc='right',colLoc='right',
-                                                          #bbox=Bbox([[1, 1], [3, 7]])
-						          #bbox=[0.15,0.05, .2,.3])
-						          #bbox=[.1,0.02, .5,.3])
-						          bbox=[.1,0.02, .3,.3])
+						          bbox=[.1,0.02*len(filters), .4,.3])
 					the_table.auto_set_font_size(False)
                                         the_table.set_fontsize(4.5)
-                                        #the_table.scale(1.4, 1.4)
 					ax.set_xscale('log')
                                         ax.set_xticks([])
-					#ax2.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 					bx.set_xscale('log')
-                                        #ax.set_xticks([])
 					bx.xaxis.set_major_formatter(FormatStrFormatter('%d'))
 					ax.set_ylim(minmag+1,maxmag-1)
-					#ax.invert_yaxis()		
-					
-					
 
 				if mod=='image':
+                                        if type(fit_box)==dict:
+                                                sizefits=int(fit_box[ids[i]])/2.
+                                        else:
+                                                sizefits=int(fit_box)/2.
+                                        
                         		img=Image.open(os.path.join(plots_dir,'mosaic_'+ids[i]+'.png'))
 					size=int(img.size[0]/2.-1)
-					circle1=plt.Circle((size,size),rfit_tmp/rmax*450.,color=filter_dic[k],fill=False,linewidth=2)
+                                        circ_size=size*rfit_tmp/sizefits
+					circle1=plt.Circle((size,size),circ_size,color=filter_dic[k],fill=False,linewidth=2)
 					ax.imshow(img,cmap='magma')
 					ax.add_artist(circle1)
 					bx.set_yticks([])
